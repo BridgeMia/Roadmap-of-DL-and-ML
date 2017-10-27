@@ -1,0 +1,42 @@
+import struct
+import numpy as np
+import keras
+_tag = '>'
+_twoBytes = 'II'
+_fourBytes = 'IIII'
+_pictureBytes = '784B'
+_labelByte = '1B'
+_twoBytes2 = _tag + _twoBytes
+_fourBytes2 = _tag + _fourBytes
+_pictureBytes2 = _tag + _pictureBytes
+_labelByte2 = _tag + _labelByte
+def GetImage(path):
+	file = open(path,'rb')
+	buf = file.read()
+	file.close()
+	index = 0
+	numMagic, numImgs, numRows, numCols = struct.unpack_from(_fourBytes2,buf,index)
+	index += struct.calcsize(_fourBytes)
+	images = []
+	for i in range(numImgs):
+		imgVal = struct.unpack_from(_pictureBytes2, buf, index)
+		index += struct.calcsize(_pictureBytes2)
+		imgVal = list(imgVal)
+		for j in range(len(imgVal)):
+			if imgVal[j] > 1:
+				imgVal[j] = 1
+		images.append(imgVal)
+	return np.array(images)
+def GetLabel(path):
+        binFile = open(path,'rb')
+        buf = binFile.read()
+        binFile.close()
+        index = 0
+        magic, numItems= struct.unpack_from(_twoBytes2, buf,index)
+        index += struct.calcsize(_twoBytes2)
+        labels = [];
+        for x in range(numItems):
+            im = struct.unpack_from(_labelByte2,buf,index)
+            index += struct.calcsize(_labelByte2)
+            labels.append(im[0])
+        return keras.utils.to_categorical(np.array(labels))
